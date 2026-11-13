@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, Numeric, SmallInteger, String, Text, UniqueConstraint, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, Numeric, SmallInteger, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
@@ -41,6 +41,7 @@ class Observation(Base):
     year: Mapped[int] = mapped_column(SmallInteger)
     sex: Mapped[str] = mapped_column(String(10), server_default="BTSX")
     value: Mapped[Decimal | None] = mapped_column(Numeric(18, 4))
+    is_outlier: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
     imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     country: Mapped[Country] = relationship()
     indicator: Mapped[Indicator] = relationship()

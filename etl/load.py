@@ -71,6 +71,7 @@ def upsert_observations(
                 "year": int(row["year"]),
                 "sex": row["sex"],
                 "value": row["value"],
+                "is_outlier": bool(row.get("is_outlier", False)),
             }
         )
 
@@ -80,7 +81,11 @@ def upsert_observations(
         stmt = pg_insert(Observation).values(chunk)
         stmt = stmt.on_conflict_do_update(
             constraint="uq_observation",
-            set_={"value": stmt.excluded.value, "imported_at": func.now()},
+            set_={
+                "value": stmt.excluded.value,
+                "is_outlier": stmt.excluded.is_outlier,
+                "imported_at": func.now(),
+            },
         )
         result = session.execute(stmt)
         loaded += result.rowcount or 0
