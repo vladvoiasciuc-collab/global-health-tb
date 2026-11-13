@@ -49,7 +49,7 @@ def upsert_countries(session: Session, countries: list[dict]) -> int:
         },
     )
     result = session.execute(stmt)
-    return result.rowcount
+    return result.rowcount or 0
 
 
 def upsert_observations(
@@ -77,7 +77,7 @@ def upsert_observations(
     loaded = 0
     for start in range(0, len(rows), chunk_size):
         chunk = rows[start : start + chunk_size]
-        stmt = insert(Observation).values(chunk)
+        stmt = pg_insert(Observation).values(chunk)
         stmt = stmt.on_conflict_do_update(
             constraint="uq_observation",
             set_={"value": stmt.excluded.value, "imported_at": func.now()},

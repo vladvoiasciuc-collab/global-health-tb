@@ -41,6 +41,7 @@ def main() -> None:
 
         valid_iso3 = set(countries_df["iso3"])
         source_id = get_or_create_source(session, SOURCE_NAME, "https://api.worldbank.org")
+        session.commit()  # make sure source is persisted
 
         # 2. Indicators
         for code, name, unit, filename in INDICATORS:

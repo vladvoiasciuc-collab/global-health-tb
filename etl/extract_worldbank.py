@@ -4,23 +4,38 @@ Downloads countries list and indicator series. Saves raw JSON.
 """
 from pathlib import Path
 from typing import Any
+import time
 import requests
 import json
 
 _DEFAULT_RAW_DIR = Path("data/raw/worldbank")
-HTTP_TIMEOUT_S = 120
+HTTP_TIMEOUT_S = 300  # increased
 
 
 class WorldBankApiError(Exception):
     """Raised when the World Bank response shape is unexpected."""
 
 
-def _get_all_pages(url: str) -> tuple[list[dict[str, Any]], str]:
+def _get_all_pages(url: str, max_retries: int = 3) -> tuple[list[dict[str, Any]], str]:
     records: list[dict[str, Any]] = []
     page = 1
     while True:
-        response = requests.get(url, params={"page": page, "per_page": 1000}, timeout=HTTP_TIMEOUT_S)
-        response.raise_for_status()
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(
+                    url,
+                    params={"page": page, "per_page": 500},  # smaller page size
+                    timeout=HTTP_TIMEOUT_S,
+                )
+                response.raise_for_status()
+                break
+            except requests.exceptions.ReadTimeout:
+                if attempt == max_retries - 1:
+                    raise
+                time.sleep(5 * (attempt + 1))
+        else:
+            raise WorldBankApiError(f"{url}: failed after retries")
+
         body = response.json()
         if not (isinstance(body, list) and len(body) == 2):
             raise WorldBankApiError(f"{url}: unexpected response {body!r}")
